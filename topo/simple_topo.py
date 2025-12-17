@@ -26,17 +26,14 @@ class CDNTopo(Topo):
         
         edge = self.addSwitch('s2',)
 
-        
-        
-        origin = self.addHost('h0', )
-        cache1 = self.addHost('h1',  )
-        cache2 = self.addHost('h2',  )
-        cache3 = self.addHost('h3',  )
+        origin = self.addHost('origin', )
+        cache1 = self.addHost('cdn1',  )
+        cache2 = self.addHost('cdn2',  )
+        cache3 = self.addHost('cdn3',  )
 
-        client1 = self.addHost('h4',  )
-        client2 = self.addHost('h5',  )
-        client3 = self.addHost('h6', )
-
+        client1 = self.addHost('client1',  )
+        client2 = self.addHost('client2',  )
+        client3 = self.addHost('client3', )
         proxy = self.addHost('proxy', )
 
 
@@ -98,8 +95,6 @@ class CDNTopo(Topo):
             topo_data["ports"][sw] = {}
 
         # iterate links to get port numbers
-        
-        
         for n1, n2, link in self.links(sort=True, withInfo=True):
             
             # print(n1, n2, link)
@@ -120,38 +115,7 @@ class CDNTopo(Topo):
 
         self.topo_data = topo_data
         return topo_data
-        
-
-    
-    
-    
-
-   
-
-    
-
-    
-    def get_switch_mac(self, switch):
-        # return self.nodeInfo(switch)["params"]["mac"]
-        pass
-        # mac is defined by mininet
-    
-class MyTopo( Topo ):
-    "Simple topology example."
-
-    def build( self ):
-        "Create custom topo."
-
-        # Add hosts and switches
-        leftHost = self.addHost( 'h1' )
-        rightHost = self.addHost( 'h2' )
-        leftSwitch = self.addSwitch( 's3' )
-        rightSwitch = self.addSwitch( 's4' )
-
-        # Add links
-        self.addLink( leftHost, leftSwitch )
-        self.addLink( leftSwitch, rightSwitch )
-        self.addLink( rightSwitch, rightHost )
+ 
 
 if __name__ == '__main__':
     topo = CDNTopo()

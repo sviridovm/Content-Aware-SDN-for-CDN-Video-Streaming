@@ -14,7 +14,7 @@ from scapy.all import Ether, sendp, Packet
 
 metadata = json.load(open("topo/topo.json"))
 
-ORIGIN_MAC = metadata["hosts"]["h0"]["mac"]
+ORIGIN_MAC = metadata["hosts"]["origin"]["mac"]
 
 CACHE_SIZE = 100                               # number of chunks
 CACHE = OrderedDict()                          # (video_id, chunk_id) -> bytes
@@ -181,6 +181,10 @@ if __name__ == "__main__":
     host_name = f"{args.id}"
     
     try: 
+        
+        print("CDN Server started listening for video requests...")
+        print("Press Ctrl+C to stop.")
+        
         listen_for_video_requests(
             is_origin=False,
             handle_request_callback=serve_chunk,

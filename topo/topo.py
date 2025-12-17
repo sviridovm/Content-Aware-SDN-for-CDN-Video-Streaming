@@ -47,7 +47,6 @@ class CDNTopo(Topo):
         self.addLink(edge, client2, port1=6, port2=1)
         self.addLink(edge, client3, port1=7, port2=1)
         
-        self.addLink(edge, proxy, port1=8, port2=1)
         
         self.topo_data = None
         self.graph = None

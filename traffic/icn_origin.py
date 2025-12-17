@@ -32,17 +32,19 @@ def serve_chunk(video_id, chunk_id, request_pkt: Packet):
         video_id=video_id,
         chunk_id=chunk_id,
         data=data,
-        from_origin=True
+        from_origin=True,
+        host="origin"
     )
 
 if __name__ == "__main__":
-    config = json.loads(open("topo/topo.json").read())
+    # config = json.loads(open("topo/topo.json").read())
 
 
     try: 
         listen_for_video_requests(
             is_origin=True,
-            handle_request_callback=serve_chunk
+            handle_request_callback=serve_chunk,
+            host="origin"
         )
     except KeyboardInterrupt:
         pass

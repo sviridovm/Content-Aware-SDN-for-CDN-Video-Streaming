@@ -14,23 +14,15 @@ To emulate a tradional software proxy without intelligent SDN routing:
 
 make mininet-simple
 
-make cdn1
-python3 traffic/simple_cdn.py
-
-make cdn2
-python3 traffic/simple_cdn.py
-
-make cdn3
-python3 traffic/simple_cdn.py
+make simple-cdn1
+make simple-cdn2
+make simple-cdn3
 
 make proxy
-python3 traffic/proxy.py
 
-make origin
-python3 traffic/origin_server.py
+make simple-origin
 
-make client1
-python3 traffic/simple_client.py
+make simple-client1
 
 ```
 
@@ -42,24 +34,18 @@ For the Content Aware SDN version run:
 make mininet
 
 make cdn1
-python3 traffic/icn_cdn.py
 
 make cdn2
-python3 traffic/icn_cdn.py
 
 make cdn3
-python3 traffic/icn_cdn.py
 
 make origin
-python3 traffic/icn_origin.py
 
 make controller grpc_port=50001 name=s1
 
 make controller grpc_port=50002 name=s2
 
-
 make client1
-python3 traffic/icn_client.py
 
 ```
 

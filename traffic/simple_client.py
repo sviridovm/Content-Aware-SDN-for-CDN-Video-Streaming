@@ -14,15 +14,12 @@ def get_chunk(video_id: int, chunk_id: int):
     url = f"{SERVER}/video/{video_id}/{chunk_id}"
 
     resp = requests.get(url)
-
-
-    
     os.makedirs("downloads", exist_ok=True)
     # write to downloads/file.txt
-    with open("downloads/file.txt", "wb") as f:
-        f.write(resp.content)
 
     if resp.status_code == 200:
+        with open("downloads/file.txt", "wb") as f:
+            f.write(resp.content)
         print(resp.text)
 
     else:

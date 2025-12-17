@@ -78,18 +78,21 @@ header tcp_t {
 **/
 
 
-header cdn__req_t {
-    bit<32> video_id;
-    bit<32> chunk_id;
+header cdn_req_t {
+    bit<32> videoID;
+    bit<32> chunkID;
 }
 
+struct metadata {
+
+}
 
 
 struct headers {
     ethernet_t ethernet;
 //    ipv4_t ipv4;
 //    tcp_t tcp;
-    cdn_t cdn_req;
+    cdn_req_t cdn_req;
     packet_in_header_t packet_in;
 }
 
@@ -139,9 +142,9 @@ parser MyParser(packet_in packet,
     **/
 
     state parse_cdn {
-        packet.extract(hdr.cdn);
-        meta.videoID = hdr.cdn.video_id;
-        meta.chunkID = hdr.cdn.chunk_id;
+        packet.extract(hdr.cdn_req);
+        //meta.videoID = hdr.cdn_req.video_id;
+        //meta.chunkID = hdr.cdn_req.chunk_id;
         transition accept;
     }
     
@@ -207,8 +210,8 @@ control MyIngress(inout headers hdr,
 
     table cdn_table {
         key = {
-            meta.videoID: exact;
-            meta.chunkID: exact;
+            hdr.cdn_req.videoID: exact;
+            hdr.cdn_req.chunkID: exact;
         }
 
         actions = {
@@ -229,7 +232,7 @@ control MyIngress(inout headers hdr,
         }
 
 
-        if (hdr.cdn.isValid()) {
+        if (hdr.cdn_req.isValid()) {
             cdn_table.apply();
             return;
         }

@@ -1,0 +1,119 @@
+table_id: 33604107 ("MyIngress.mac_forward")
+match {
+  field_id: 1 ("hdr.ethernet.dstAddr")
+  exact {
+    value: "\\xae\\x12\\x59\\xf8\\xcf\\x9c"
+  }
+}
+action {
+  action {
+    action_id: 16838673 ("MyIngress.forward")
+    params {
+      param_id: 1 ("port")
+      value: "\\x01"
+    }
+  }
+}
+
+table_id: 33604107 ("MyIngress.mac_forward")
+match {
+  field_id: 1 ("hdr.ethernet.dstAddr")
+  exact {
+    value: "\\x86\\x11\\x28\\x7e\\x9e\\x1b"
+  }
+}
+action {
+  action {
+    action_id: 16838673 ("MyIngress.forward")
+    params {
+      param_id: 1 ("port")
+      value: "\\x01"
+    }
+  }
+}
+
+table_id: 33604107 ("MyIngress.mac_forward")
+match {
+  field_id: 1 ("hdr.ethernet.dstAddr")
+  exact {
+    value: "\\x42\\x88\\x90\\xf6\\x72\\x11"
+  }
+}
+action {
+  action {
+    action_id: 16838673 ("MyIngress.forward")
+    params {
+      param_id: 1 ("port")
+      value: "\\x01"
+    }
+  }
+}
+
+table_id: 33604107 ("MyIngress.mac_forward")
+match {
+  field_id: 1 ("hdr.ethernet.dstAddr")
+  exact {
+    value: "\\xa6\\x26\\x0b\\x83\\xf9\\xf7"
+  }
+}
+action {
+  action {
+    action_id: 16838673 ("MyIngress.forward")
+    params {
+      param_id: 1 ("port")
+      value: "\\x01"
+    }
+  }
+}
+
+table_id: 33604107 ("MyIngress.mac_forward")
+match {
+  field_id: 1 ("hdr.ethernet.dstAddr")
+  exact {
+    value: "\\xda\\x8f\\x3a\\x12\\x40\\x59"
+  }
+}
+action {
+  action {
+    action_id: 16838673 ("MyIngress.forward")
+    params {
+      param_id: 1 ("port")
+      value: "\\x01"
+    }
+  }
+}
+
+table_id: 33604107 ("MyIngress.mac_forward")
+match {
+  field_id: 1 ("hdr.ethernet.dstAddr")
+  exact {
+    value: "\\x62\\x7d\\x34\\x12\\xe9\\xdf"
+  }
+}
+action {
+  action {
+    action_id: 16838673 ("MyIngress.forward")
+    params {
+      param_id: 1 ("port")
+      value: "\\x01"
+    }
+  }
+}
+
+table_id: 33604107 ("MyIngress.mac_forward")
+match {
+  field_id: 1 ("hdr.ethernet.dstAddr")
+  exact {
+    value: "\\x46\\xc9\\x58\\x44\\xf4\\x7a"
+  }
+}
+action {
+  action {
+    action_id: 16838673 ("MyIngress.forward")
+    params {
+      param_id: 1 ("port")
+      value: "\\x02"
+    }
+  }
+}
+

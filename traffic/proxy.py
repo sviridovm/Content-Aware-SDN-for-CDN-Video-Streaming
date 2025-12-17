@@ -11,9 +11,9 @@ metadata = json.loads(open("topo/topo.json").read())
 
 cdn_hosts = metadata["hosts"]
 cdn_hosts = []
-cdn_hosts.append(metadata["hosts"]["h1"]["ip"].split("/")[0])
-cdn_hosts.append(metadata["hosts"]["h2"]["ip"].split("/")[0])
-cdn_hosts.append(metadata["hosts"]["h3"]["ip"].split("/")[0])
+cdn_hosts.append(metadata["hosts"]["cdn1"]["ip"].split("/")[0])
+cdn_hosts.append(metadata["hosts"]["cdn2"]["ip"].split("/")[0])
+cdn_hosts.append(metadata["hosts"]["cdn3"]["ip"].split("/")[0])
 
 cdn_urls = []
 for host in cdn_hosts:

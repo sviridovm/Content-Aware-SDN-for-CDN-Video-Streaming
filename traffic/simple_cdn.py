@@ -17,9 +17,9 @@ CHUNKS_TO_REMOVE = queue.Queue()
 import json
 metadata = json.load(open("topo/topo.json"))
 
-ip = metadata["hosts"]["h0"]["ip"]
+IP = metadata["hosts"]["origin"]["ip"]
 
-ORIGIN_URL = f"http://{ip}:8000/video"     # now /video/<vid>/<chunk>
+ORIGIN_URL = f"http://{IP}:8000/video"     # now /video/<vid>/<chunk>
 
 
 @app.route("/video/<video_id>/<chunk_id>")

@@ -1,24 +1,3 @@
-############################################################################
-##
-##     This file is part of Purdue CS 536.
-##
-##     Purdue CS 536 is free software: you can redistribute it and/or modify
-##     it under the terms of the GNU General Public License as published by
-##     the Free Software Foundation, either version 3 of the License, or
-##     (at your option) any later version.
-##
-##     Purdue CS 536 is distributed in the hope that it will be useful,
-##     but WITHOUT ANY WARRANTY; without even the implied warranty of
-##     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-##     GNU General Public License for more details.
-##
-##     You should have received a copy of the GNU General Public License
-##     along with Purdue CS 536. If not, see <https://www.gnu.org/licenses/>.
-##
-#############################################################################
-
-
-
 export PROJECT_DIR = $(shell pwd)
 export DOCKER_SCRIPTS = $(shell pwd)/scripts
 
@@ -56,14 +35,6 @@ mininet-simple:
 
 
 
-
-# run mininet locally now
-# 	venv37/bin/python topo/topo.py
-
-
-
-
-
 # Usage: make controller name=bridge grpc_port=50001 topo=linear,2,2
 # controller:
 # 	make .controller-$(name)
@@ -71,32 +42,6 @@ mininet-simple:
 # Usage: make controller-logs name=bridge grpc_port=50001
 controller-logs:
 	make .controller-$(name)-logs
-
-onos-start:
-	ONOS_APPS=gui,proxyarp,drivers.bmv2,lldpprovider,hostprovider \
-	$(DOCKER_SCRIPTS)/onos
-onos-cli:
-	$(DOCKER_SCRIPTS)/onos-cli
-
-onos-netcfg:
-	$(DOCKER_SCRIPTS)/onos-netcfg netcfg/netcfg.json
-
-onos-build-app:
-	cd $(APP_NAME)/ && $(DOCKER_SCRIPTS)/maven clean package
-
-onos-reload-app: 
-	$(DOCKER_SCRIPTS)/onos-app reinstall! $(APP_NAME)/target/$(APP_NAME)-1.0-SNAPSHOT.oar
-
-onos-clean-app:
-	sudo rm -rf $(APP_NAME)/target
-
-netcfg:
-	$(DOCKER_SCRIPTS)/onos-netcfg netcfg/netcfg.json
-
-
-mininet-onos:
-	$(DOCKER_SCRIPTS)/mn-stratum
-
 
 # Usage: make host name=h1s1
 host:
@@ -113,30 +58,59 @@ host:
 
 
 origin:
-	$(DOCKER_SCRIPTS)/utils/mn-stratum/exec h0 \
-		python3 traffic/origin_server.py
+	$(DOCKER_SCRIPTS)/utils/mn-stratum/exec-script origin "python3 traffic/icn_origin.py"
 
-cdn1:
-	$(DOCKER_SCRIPTS)/utils/mn-stratum/exec h1 && \
-		python3 traffic/cdn2.py --id h1 --port 8000
+simple-origin:
+	$(DOCKER_SCRIPTS)/utils/mn-stratum/exec-script origin "python3 traffic/origin_server.py"
+simple-infra:
+	$(DOCKER_SCRIPTS)/utils/mn-stratum/exec-script-d cdn1 "python3 traffic/simple_cdn.py"
+	$(DOCKER_SCRIPTS)/utils/mn-stratum/exec-script-d cdn2 "python3 traffic/simple_cdn.py"
+	$(DOCKER_SCRIPTS)/utils/mn-stratum/exec-script-d cdn3 "python3 traffic/simple_cdn.py"
+	$(DOCKER_SCRIPTS)/utils/mn-stratum/exec-script-d origin "python3 traffic/origin_server.py"
+	$(DOCKER_SCRIPTS)/utils/mn-stratum/exec-script-d proxy "python3 traffic/proxy.py"
+sdn-infra:
+	$(DOCKER_SCRIPTS)/utils/mn-stratum/exec-d-script cdn1 "python3 traffic/icn_cdn.py --id cdn1"
+	$(DOCKER_SCRIPTS)/utils/mn-stratum/exec-d-script cdn2 "python3 traffic/icn_cdn.py --id cdn2"
+	$(DOCKER_SCRIPTS)/utils/mn-stratum/exec-d-script cdn3 "python3 traffic/icn_cdn.py --id cdn3"
+	$(DOCKER_SCRIPTS)/utils/mn-stratum/exec-d-script origin "python3 traffic/icn_origin.py"
 
-cdn2:
-	$(DOCKER_SCRIPTS)/utils/mn-stratum/exec h2 && \
-		python3  traffic/cdn2.py --id h2 --port 8000
 
-cdn3:
-	$(DOCKER_SCRIPTS)/utils/mn-stratum/exec h3 && \
-		python3  traffic/cdn2.py --id h3 --port 8000
+simple-client1:
+	$(DOCKER_SCRIPTS)/utils/mn-stratum/exec-script client1 "python3 traffic/simple_client.py"
+
+
+simple-cdn1:
+	$(DOCKER_SCRIPTS)/utils/mn-stratum/exec-script cdn1 "python3 traffic/simple_cdn.py"
+
+simple-cdn2:
+	$(DOCKER_SCRIPTS)/utils/mn-stratum/exec-script cdn2 "python3 traffic/simple_cdn.py"
+
+simple-cdn3:
+	$(DOCKER_SCRIPTS)/utils/mn-stratum/exec-script cdn3 "python3 traffic/simple_cdn.py"
 
 proxy:
-	$(DOCKER_SCRIPTS)/utils/mn-stratum/exec proxy && \
-		python3  traffic/proxy.py --config topo/topo.json 
+	$(DOCKER_SCRIPTS)/utils/mn-stratum/exec-script proxy "python3 traffic/proxy.py"
 
+simple-origin:
+	$(DOCKER_SCRIPTS)/utils/mn-stratum/exec-script origin "python3 traffic/origin_server.py"
+
+cdn1:
+	$(DOCKER_SCRIPTS)/utils/mn-stratum/exec-script cdn1 "python3 traffic/icn_cdn.py --id cdn1"
+# 		python3 traffic/cdn2.py --id h1 --port 8000
+
+cdn2:
+	$(DOCKER_SCRIPTS)/utils/mn-stratum/exec-script cdn2 "python3 traffic/icn_cdn.py --id cdn2"
+
+cdn3:
+	$(DOCKER_SCRIPTS)/utils/mn-stratum/exec-script cdn3 "python3 traffic/icn_cdn.py --id cdn3"
 
 client1:
-	$(DOCKER_SCRIPTS)/utils/mn-stratum/exec h4 && \
-		python3  traffic/client2.py 
+	$(DOCKER_SCRIPTS)/utils/mn-stratum/exec-script client1 "python3 traffic/icn_client.py --id client1"
 
+
+controllers:
+	make controller grpc_port=50001 name=s1
+	make controller grpc_port=50002 name=s2
 
 controller:
 	P4_PROGRAM_NAME=switch \

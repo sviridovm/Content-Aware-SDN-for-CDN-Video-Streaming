@@ -74,7 +74,7 @@ from util import request_video
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--host-id", type=int, required=True, help="hostID")
+    parser.add_argument("--id", type=str, required=True, help="hostID")
     # topo_config = json.loads(open("topo/topo.json").read())
 
 
@@ -89,7 +89,7 @@ def main():
                 video_id=video_id,
                 chunk_id=chunk_id,
                 from_origin=False,
-                host=f"h{args.host_id}"
+                host=f"h{args.id}"
             )
 
             print("fetched:", resp.content)
