@@ -107,6 +107,12 @@ cdn3:
 client1:
 	$(DOCKER_SCRIPTS)/utils/mn-stratum/exec-script client1 "python3 traffic/icn_client.py --id client1"
 
+client1-test:
+	$(DOCKER_SCRIPTS)/utils/mn-stratum/exec client1
+
+make mininet-cli:
+	$(DOCKER_SCRIPTS)/utils/mn-stratum/cli
+
 
 controllers:
 	make controller grpc_port=50001 name=s1

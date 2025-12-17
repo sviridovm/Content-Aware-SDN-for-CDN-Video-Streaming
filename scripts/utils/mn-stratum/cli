@@ -1,0 +1,5 @@
+#!/bin/bash
+MN_STRATUM_DOCKER_NAME=${MN_STRATUM_DOCKER_NAME:-mn-stratum}
+
+docker exec -it $MN_STRATUM_DOCKER_NAME bash 
+

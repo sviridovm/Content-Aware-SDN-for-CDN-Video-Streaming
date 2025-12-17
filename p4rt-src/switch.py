@@ -22,7 +22,7 @@ BRIDGE_CPU_PORT = 255
 NUM_LOGS_THRESHOLD = 10
 
 ETH_TYPE_CDN = 0x88B5  # Custom Ethertype for CDN traffic
-        
+ETH_TYPE_ARP = 0x0806  # Ethertype for ARP traffic
 
 def install_ipv4_route(dst_ip, dst_mac, src_mac, port):
     print("bruh")
@@ -218,6 +218,9 @@ def ProcPacketIn(switch_name, logs_dir, num_logs_threshold):
                 eth_type_in_bytes = payload[12:14]
                 eth_type = int.from_bytes(eth_type_in_bytes, "big")
 
+
+
+
                 # rest of bytes should be raw data
                 if eth_type == ETH_TYPE_CDN:
                     chunk_data = payload[17:]
@@ -249,7 +252,12 @@ def ProcPacketIn(switch_name, logs_dir, num_logs_threshold):
                         print("PacketIn CDN: video_id={0} chunk_id={1} cdn_port={2}".format(
                             video_id, chunk_id, cdn_port))
                     
-                    
+                elif eth_type == ETH_TYPE_ARP:
+                    table_entry = p4sh.TableEntry('MyIngress.switch_table')(action='MyIngress.forward')
+                    table_entry.match['hdr.ethernet.dstAddr'] = src_mac
+                    table_entry.action['port'] =  str(ingress_port)
+                    table_entry.insert()
+                
                 else:
                     print("PacketIn ether?: dst={0} src={1} port={2}".format(
                         dst_mac, src_mac, ingress_port))
@@ -301,14 +309,6 @@ if __name__ == '__main__':
     print("Switch Started @ Port: {0}".format(args.grpc_port))
     print("Press CTRL+C to stop ...")
     print(args.name)
-
-
-
-    with contextlib.redirect_stdout(None):  # A hack to suppress print statements 
-        #TODO: install ipv4 routing rules here
-        # should have different rules for edge and core switches
-        # install_static_routes(meta)
-        pass
     
     # install_mac_rules(meta, args.name)
     install_mac_table_entries(meta, args.name)

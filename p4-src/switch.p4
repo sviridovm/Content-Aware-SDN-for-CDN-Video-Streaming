@@ -24,6 +24,7 @@
 
 #define ETH_TYPE_MSG_TO_CONTROLLER 0x88B5
 
+#define ETH_TYPE_ARP 0x0806
 
 
 typedef bit<9> egressSpec_t;
@@ -193,6 +194,14 @@ control MyIngress(inout headers hdr,
         mark_to_drop(standard_metadata);
     }
 
+    action flood() {
+        standard_metadata.egress_spec = 0x1FF; // BMv2 flood
+    }
+
+    action noop() {
+
+    }
+
 
     table mac_forward {
         key = {
@@ -201,11 +210,11 @@ control MyIngress(inout headers hdr,
 
         actions = {
             forward;
-            drop;
+            flood;
         }
 
         size = 1024;
-        default_action = drop;
+        default_action = flood();
     }
 
     table cdn_table {
@@ -225,7 +234,7 @@ control MyIngress(inout headers hdr,
 
 
     apply {
-
+        /**
         if(hdr.ethernet.etherType == ETH_TYPE_MSG_TO_CONTROLLER) {
             to_controller();
             return;
@@ -236,8 +245,15 @@ control MyIngress(inout headers hdr,
             cdn_table.apply();
             return;
         }
+        **/
 
-        mac_forward.apply();
+        if(hdr.ethernet.etherType == ETH_TYPE_ARP) {
+            flood();
+        } else {
+            mac_forward.apply();
+
+        }
+
 
 
     }
@@ -267,7 +283,13 @@ control MyEgress(inout headers hdr,
 
         if (standard_metadata.egress_port == standard_metadata.ingress_port) {
             drop();
+            return;
         } 
+
+        if (standard_metadata.egress_port == CPU_PORT && hdr.ethernet.etherType == ETH_TYPE_ARP) {
+            to_controller();
+            return;
+        }
     
     }
 }
