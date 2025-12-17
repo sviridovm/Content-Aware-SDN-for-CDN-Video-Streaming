@@ -89,10 +89,11 @@ def main():
                 video_id=video_id,
                 chunk_id=chunk_id,
                 from_origin=False,
-                host=f"h{args.id}"
+                host=f"{args.id}"
             )
 
-            print("fetched:", resp.content)
+
+            print("fetched:", resp.get_data(), resp.status_code)
 
 
         except KeyboardInterrupt:

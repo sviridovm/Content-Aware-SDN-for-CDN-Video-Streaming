@@ -22,7 +22,6 @@ BRIDGE_CPU_PORT = 255
 NUM_LOGS_THRESHOLD = 10
 
 ETH_TYPE_CDN = 0x88B5  # Custom Ethertype for CDN traffic
-ETH_TYPE_ipv4 = 0x0800
         
 
 def install_ipv4_route(dst_ip, dst_mac, src_mac, port):
@@ -160,23 +159,9 @@ def install_mac_table_entries(topo_metadata, sw):
 
 
 def install_mac_rules(metadata, switch_name):
-    """
-    Returns a list of (dst_mac, out_port) for the given switch.
-    metadata is the JSON dictionary you provided.
-    """
 
     hosts = metadata["hosts"]
-
-    # hosts = {k: v for k, v in hosts.items() if v["switch"] == switch_name}
-    # print(hosts)
-    
-    
-    
     ports = metadata["ports"][switch_name]
-    
-            
-    
-    
     
     print("Installing MAC rules for switch", switch_name)
 

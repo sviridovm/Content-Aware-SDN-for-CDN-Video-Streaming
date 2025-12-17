@@ -44,27 +44,33 @@ def is_video_response(pkt):
 
 def request_video(dst_mac_addr: str, video_id: int, chunk_id: int, from_origin: bool, host: str) -> Response:
     eth = Ether(dst=dst_mac_addr, type=ETH_TYPE_REQ_TO_ORGN if from_origin else ETH_TYPE_REQ_TO_CDN)
-    packet = eth / Raw(
-        IntField("video_id", video_id) /
-        IntField("chunk_id", chunk_id)
+    packet = eth / VideoRequest(
+        video_id=video_id,
+        chunk_id=chunk_id
     )
     
     
     iface_name = f"{host}-eth1"
     # Send packet and wait for response
-    sendp(packet, iface=iface_name, verbose=False, timeout=2)
+    sendp(packet, iface=iface_name, verbose=False)
 
 
 
-    pkts = sniff(
-    iface=iface_name,
-    lfilter=is_video_response,
-    timeout=5,
-    count=1)
+    pkts = None
+    try:
+        pkts = sniff(
+        iface=iface_name,
+        lfilter=is_video_response,
+        timeout=5,
+        count=1)
+    except Exception as e:
+        print("Error while sniffing:", e)
+        return Response(status=504)
+
 
     if not pkts:
-        print("No response received")
-        abort(504)
+        # print("No response received")
+        return Response(status=504, response="No response received")
 
     
     resp = pkts[0][VideoResponse]
