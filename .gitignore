@@ -1,0 +1,11 @@
+onos/
+platform-bm
+venv/
+venv37/
+.vscode/
+behavioral-model/
+video_old/
+graph.md
+
+venv/
+venv37/

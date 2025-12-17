@@ -1,0 +1,3 @@
+make controller grpc_port=50001 name=s1
+make controller grpc_port=50002 name=s2
+
