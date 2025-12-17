@@ -2,7 +2,7 @@ import socket
 from urllib import response
 from flask import Response, abort, send_file
 import scapy
-from scapy.all import Ether, sendp, Raw, Packet
+from scapy.all import Ether, sendp, Raw, Packet, sniff
 from scapy.fields import IntField, StrLenField
 from scapy.all import bind_layers
 
@@ -42,20 +42,22 @@ def is_video_response(pkt):
     )
 
 
-def request_video(dst_mac_addr: str, video_id: int, chunk_id: int, from_origin: bool = False) -> Response:
+def request_video(dst_mac_addr: str, video_id: int, chunk_id: int, from_origin: bool, host: str) -> Response:
     eth = Ether(dst=dst_mac_addr, type=ETH_TYPE_REQ_TO_ORGN if from_origin else ETH_TYPE_REQ_TO_CDN)
     packet = eth / Raw(
         IntField("video_id", video_id) /
         IntField("chunk_id", chunk_id)
     )
     
+    
+    iface_name = f"{host}-eth1"
     # Send packet and wait for response
-    sendp(packet, iface="eth0", verbose=False, timeout=2)
+    sendp(packet, iface=iface_name, verbose=False, timeout=2)
 
 
 
-    pkts = scapy.sniff(
-    iface="eth0",
+    pkts = sniff(
+    iface=iface_name,
     lfilter=is_video_response,
     timeout=5,
     count=1)
@@ -76,7 +78,7 @@ def request_video(dst_mac_addr: str, video_id: int, chunk_id: int, from_origin: 
 
 
 
-def listen_for_video_requests(is_origin: bool, handle_request_callback):
+def listen_for_video_requests(is_origin: bool, handle_request_callback, host: str):
     ETH_TYPE = ETH_TYPE_REQ_TO_ORGN if is_origin else ETH_TYPE_REQ_TO_CDN
 
     def is_video_request(pkt: Packet):
@@ -94,25 +96,25 @@ def listen_for_video_requests(is_origin: bool, handle_request_callback):
             print(f"Received video request: video_id={video_id}, chunk_id={chunk_id}")
             handle_request_callback(video_id, chunk_id, pkt)
 
-    scapy.sniff(
-        iface="eth0",
+    sniff(
+        iface=f"{host}-eth1",
         prn=process_packet,
         lfilter=is_video_request,
         store=0
     )
     
-def send_video_response(dst_mac_addr: str, video_id: int, chunk_id: int, data: bytes, from_origin: bool = False):
+def send_video_response(dst_mac_addr: str, video_id: int, chunk_id: int, data: bytes, from_origin: bool, host: str):
     eth = Ether(dst=dst_mac_addr, type=ETH_TYPE_RESP_FROM_ORGN if from_origin else ETH_TYPE_RESP_FROM_CDN)
     packet = eth / VideoResponse(
         video_id=video_id,
         chunk_id=chunk_id,
         data=data
     )
-    sendp(packet, iface="eth0", verbose=False)
+    sendp(packet, iface=f"{host}-eth1", verbose=False)
     
     
 from itertools import islice
-def send_update_to_controller(chunk_list: list, action: str):
+def send_update_to_controller(chunk_list: list, action: str, host: str):
     eth = Ether(dst="ff:ff:ff:ff:ff:ff", type=ETH_TYPE_MSG_TO_CONTROLLER)
     packet = eth
     
@@ -128,7 +130,7 @@ def send_update_to_controller(chunk_list: list, action: str):
         
         
         packet_with_chunks = packet / chunk_ids_bytes
-        sendp(packet_with_chunks, iface="eth0", verbose=False)
+        sendp(packet_with_chunks, iface=f"{host}-eth1", verbose=False)
     
 
 

@@ -6,8 +6,8 @@ import argparse
 import threading
 import queue
 
-from traffic.util import ETH_TYPE_MSG_TO_CONTROLLER, listen_for_video_requests, send_update_to_controller, send_video_response
-from traffic.util import request_video
+from util import ETH_TYPE_MSG_TO_CONTROLLER, listen_for_video_requests, send_update_to_controller, send_video_response
+from util import request_video
 
 from scapy.all import Ether, sendp, Packet
 
@@ -21,6 +21,10 @@ CACHE = OrderedDict()                          # (video_id, chunk_id) -> bytes
 
 CHUNKS_TO_ADD = queue.Queue()
 CHUNKS_TO_REMOVE = queue.Queue()
+
+
+host_name = None
+
 
 
 # def serve_chunk(video_id, chunk_id) -> Response:
@@ -70,10 +74,10 @@ def update_controller():
     
     if additions:
         # print(f"CDN {cdn_id} adding chunks: {additions}")
-        send_update_to_controller(additions, action="add")
+        send_update_to_controller(additions, action="add", host=host_name)
     if removals:
         # print(f"CDN {cdn_id} removing chunks: {removals}")
-        send_update_to_controller(removals, action="rem")
+        send_update_to_controller(removals, action="rem", host=host_name)
     
         
 
@@ -117,7 +121,8 @@ def fetch_chunk(video_id, chunk_id) -> bytes:
         dst_mac_addr=ORIGIN_MAC,
         video_id=video_id,
         chunk_id=chunk_id,
-        from_origin=True
+        from_origin=True,
+        host=host_name
     )
     
     if resp.status_code != 200:
@@ -155,7 +160,8 @@ def serve_chunk(video_id, chunk_id, request_pkt: Packet):
         video_id=video_id,
         chunk_id=chunk_id,
         data=data,
-        from_origin=False
+        from_origin=False,
+        host=host_name
     )
     
 
@@ -172,10 +178,13 @@ if __name__ == "__main__":
     update_thread = threading.Thread(target=periodic_update, daemon=True)
     update_thread.start()
     
+    host_name = f"{args.id}"
+    
     try: 
         listen_for_video_requests(
             is_origin=False,
-            handle_request_callback=serve_chunk
+            handle_request_callback=serve_chunk,
+            host=f"{args.id}"
         )
     except KeyboardInterrupt:
         pass

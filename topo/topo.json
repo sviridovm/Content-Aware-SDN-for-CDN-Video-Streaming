@@ -1,70 +1,64 @@
 {
     "hosts": {
-        "h0": {
+        "cdn1": {
             "ip": "10.0.0.1",
-            "mac": "fe:ad:cd:a2:ac:17",
-            "switch": "s1"
+            "mac": "da:df:58:5c:d8:09",
+            "switch": "s2"
         },
-        "h1": {
+        "cdn2": {
             "ip": "10.0.0.2",
-            "mac": "06:ac:5d:66:c9:7e",
-            "switch": "s3"
+            "mac": "82:96:ba:8d:09:60",
+            "switch": "s2"
         },
-        "h2": {
+        "cdn3": {
             "ip": "10.0.0.3",
-            "mac": "a2:fa:5e:16:01:9c",
-            "switch": "s3"
+            "mac": "d2:b9:36:a0:d6:b2",
+            "switch": "s2"
         },
-        "h3": {
+        "client1": {
             "ip": "10.0.0.4",
-            "mac": "f2:fc:7a:68:b2:f9",
-            "switch": "s3"
+            "mac": "9a:a0:d5:bd:08:d6",
+            "switch": "s2"
         },
-        "h4": {
+        "client2": {
             "ip": "10.0.0.5",
-            "mac": "1e:62:cc:e9:89:6c",
+            "mac": "9e:16:c1:2f:50:3b",
             "switch": "s2"
         },
-        "h5": {
+        "client3": {
             "ip": "10.0.0.6",
-            "mac": "36:21:36:d4:ae:f3",
+            "mac": "be:29:86:76:75:28",
             "switch": "s2"
         },
-        "h6": {
+        "origin": {
             "ip": "10.0.0.7",
-            "mac": "da:09:e2:5c:69:17",
-            "switch": "s2"
+            "mac": "2a:0b:bb:4f:8d:9b",
+            "switch": "s1"
         },
         "proxy": {
             "ip": "10.0.0.8",
-            "mac": "06:37:d9:6d:bd:28",
-            "switch": "s3"
+            "mac": "5e:e3:be:0f:80:d1",
+            "switch": "s2"
         }
     },
     "switches": [
         "s1",
-        "s2",
-        "s3"
+        "s2"
     ],
     "ports": {
         "s1": {
-            "h0": 1,
-            "s3": 2
+            "origin": 2,
+            "s2": 1
         },
         "s2": {
-            "h4": 3,
-            "h5": 4,
-            "h6": 5,
-            "proxy": 1,
-            "s3": 2
-        },
-        "s3": {
             "s1": 1,
-            "h1": 3,
-            "h2": 4,
-            "h3": 5,
-            "proxy": 2,
-            "s2": 6
+            "cdn1": 2,
+            "cdn2": 3,
+            "cdn3": 4,
+            "client1": 5,
+            "client2": 6,
+            "client3": 7,
+            "proxy": 8
         }
     }
 }

@@ -19,30 +19,18 @@ class CDNTopo(Topo):
         # Core and edge switches
         core = self.addSwitch('s1', cls=StratumBmv2Switch)
         edge = self.addSwitch('s2', cls=StratumBmv2Switch)
-        # edge2 = self.addSwitch('s3', cls=StratumBmv2Switch)
-
-        # # Hosts: origin, caches, clients
-        # origin = self.addHost('h0', ip='10.0.0.1/24', mac=macColonHex(0))
-        # cache1 = self.addHost('h1', ip='10.0.0.2/24', mac=macColonHex(1))
-        # cache2 = self.addHost('h2', ip='10.0.0.3/24', mac=macColonHex(2))
-        # cache3 = self.addHost('h3', ip='10.0.0.4/24', mac=macColonHex(3))
-
-        # client1 = self.addHost('h4', ip='10.0.0.5/24', mac=macColonHex(4))
-        # client2 = self.addHost('h5', ip='10.0.0.6/24', mac=macColonHex(5))
-        # client3 = self.addHost('h6', ip='10.0.0.7/24', mac=macColonHex(6))
         
         
-        origin = self.addHost('h0', )
-        cache1 = self.addHost('h1',  )
-        cache2 = self.addHost('h2',  )
-        cache3 = self.addHost('h3',  )
-
-        client1 = self.addHost('h4',  )
-        client2 = self.addHost('h5',  )
-        client3 = self.addHost('h6', )
         
-        proxy = self.addHost('proxy', )
+        origin = self.addHost('origin', )
+        cache1 = self.addHost('cdn1',  )
+        cache2 = self.addHost('cdn2',  )
+        cache3 = self.addHost('cdn3',  )
 
+        client1 = self.addHost('client1',  )
+        client2 = self.addHost('client2',  )
+        client3 = self.addHost('client3', )
+        
         # Core <--> Edge link
         self.addLink(core, edge, port1=1, port2=1)
 

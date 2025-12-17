@@ -6,7 +6,7 @@ import argparse
 from http.server import BaseHTTPRequestHandler
 from io import BytesIO
 
-from traffic.util import request_video
+from util import request_video
 
 # CDN_HOSTS = ["10.0.0.1", "10.0.0.2", "10.0.0.3"]
 # SERVER_IP = CDN_HOSTS[0] 
@@ -74,9 +74,11 @@ from traffic.util import request_video
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--host-id", type=int, required=False, help="hostID")
+    parser.add_argument("--host-id", type=int, required=True, help="hostID")
     # topo_config = json.loads(open("topo/topo.json").read())
 
+
+    args = parser.parse_args()
     while True:
         try:
             video_id, chunk_id = map(int, input("Enter video and chunk ID:, separated by space: ").split())
@@ -86,7 +88,8 @@ def main():
                 dst_mac_addr="FF:FF:FF:FF:FF:FF",
                 video_id=video_id,
                 chunk_id=chunk_id,
-                from_origin=False
+                from_origin=False,
+                host=f"h{args.host_id}"
             )
 
             print("fetched:", resp.content)
