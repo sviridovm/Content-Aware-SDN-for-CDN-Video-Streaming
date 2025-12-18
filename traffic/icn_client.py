@@ -1,7 +1,7 @@
 import json
 
 import argparse
-from util import request_video
+from util import request_video_from_cdn
 
 
 def main():
@@ -19,12 +19,11 @@ def main():
             video_id, chunk_id = map(int, input("Enter video and chunk ID:, separated by space: ").split())
             print(f"fetching {video_id} {chunk_id}")
             
-            resp = request_video(
+            resp = request_video_from_cdn(
                 dst_mac_addr="FF:FF:FF:FF:FF:FF",
                 src_mac_addr=my_mac,
                 video_id=video_id,
                 chunk_id=chunk_id,
-                from_origin=False,
                 host=f"{args.id}"
             )
 

@@ -103,8 +103,6 @@ def fetch_chunk(video_id, chunk_id) -> bytes:
     
     return None
 
-    # time.sleep(10) # wait for response to be processed by request thread
-
     
     
 def serve_chunk(video_id, chunk_id, request_pkt: Packet):

@@ -1,4 +1,5 @@
 import socket
+from time import time
 import scapy
 from scapy.all import Ether, sendp, Raw, Packet, sniff
 from scapy.fields import IntField, StrField
@@ -33,8 +34,8 @@ bind_layers(Ether, VideoResponse, type=ETH_TYPE_RESP_FROM_CDN)
 bind_layers(Ether, VideoRequest, type=ETH_TYPE_REQ_TO_CDN)
 
 
-def request_video(dst_mac_addr: str, src_mac_addr: str, video_id: int, chunk_id: int, from_origin: bool, host: str) -> bytes:
-    eth = Ether(dst=dst_mac_addr, type=ETH_TYPE_REQ_TO_ORGN if from_origin else ETH_TYPE_REQ_TO_CDN, src=src_mac_addr)
+def request_video_from_cdn(dst_mac_addr: str, src_mac_addr: str, video_id: int, chunk_id: int, host: str) -> bytes:
+    eth = Ether(dst=dst_mac_addr, type=ETH_TYPE_REQ_TO_CDN, src=src_mac_addr)
     packet = eth / VideoRequest(
         video_id=video_id,
         chunk_id=chunk_id
@@ -43,51 +44,47 @@ def request_video(dst_mac_addr: str, src_mac_addr: str, video_id: int, chunk_id:
     
     iface_name = f"{host}-eth1"
     
-    print("interface_name:", iface_name)
+    # print("interface_name:", iface_name)
     
-    # Send packet and wait for response
-    sendp(packet, iface=iface_name, verbose=False)
+   
 
     def is_video_response(pkt):
         return (
             pkt.haslayer(Ether)
-            and pkt[Ether].type == (ETH_TYPE_RESP_FROM_ORGN if from_origin else ETH_TYPE_RESP_FROM_CDN)
+            and pkt[Ether].type == (ETH_TYPE_RESP_FROM_CDN)
             and pkt.haslayer(VideoResponse)
         )
 
 
 
-    received_response = False
-    response = bytes()
 
-
-    def handle_packet(pkt: Packet):
+    sniffer = AsyncSniffer(
+        iface=iface_name,
+        lfilter=is_video_response,
+        stop_filter=is_video_response,
+        # timeout=5000,
+        # prn=lambda pkt: pkt.show(),
+        count=1
+    )
+    sniffer.start()
+     # Send packet and wait for response
+    sendp(packet, iface=iface_name, verbose=False)
+    sniffer.join(timeout=5)
+    
+    
+    pkts = sniffer.results
+    if pkts is not None and len(pkts) > 0:
+        pkt = pkts[0]
         pkt.show()
         resp = pkt[VideoResponse]
         video_id = resp.video_id
         chunk_id = resp.chunk_id
         data = resp.data
         print(f"Received video response: video_id={video_id}, chunk_id={chunk_id}, data_length={len(data)}")
-        nonlocal received_response
-        received_response = True
-        
-        nonlocal response
-        response = data
-
-
-    sniff(
-        iface=iface_name,
-        lfilter=is_video_response,
-        prn=handle_packet,
-        timeout=5,
-    )
+        return data
     
-    
-    if not received_response:
-        print("No response received for the video request.")
-        return bytes()
-    else:
-        return response
+    print("No response received for the video request.")
+    return bytes()
 
 def request_video_no_response(dst_mac_addr: str, src_mac_addr: str, video_id: int, chunk_id: int, from_origin: bool, host: str):
     eth = Ether(dst=dst_mac_addr, type=ETH_TYPE_REQ_TO_ORGN if from_origin else ETH_TYPE_REQ_TO_CDN, src=src_mac_addr)
