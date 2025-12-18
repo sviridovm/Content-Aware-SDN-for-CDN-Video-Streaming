@@ -188,11 +188,11 @@
       "id" : 0,
       "source_info" : {
         "filename" : "p4-src/switch.p4",
-        "line" : 309,
+        "line" : 302,
         "column" : 8,
         "source_fragment" : "MyDeparser"
       },
-      "order" : ["packet_in", "ethernet"]
+      "order" : ["packet_in", "ethernet", "cdn_req"]
     }
   ],
   "meter_arrays" : [],
@@ -233,9 +233,14 @@
       ]
     },
     {
-      "name" : "MyIngress.flood",
+      "name" : "MyIngress.forward",
       "id" : 1,
-      "runtime_data" : [],
+      "runtime_data" : [
+        {
+          "name" : "port",
+          "bitwidth" : 9
+        }
+      ],
       "primitives" : [
         {
           "op" : "assign",
@@ -245,21 +250,21 @@
               "value" : ["standard_metadata", "egress_spec"]
             },
             {
-              "type" : "hexstr",
-              "value" : "0x01ff"
+              "type" : "runtime_data",
+              "value" : 0
             }
           ],
           "source_info" : {
             "filename" : "p4-src/switch.p4",
-            "line" : 198,
+            "line" : 181,
             "column" : 8,
-            "source_fragment" : "standard_metadata.egress_spec = 0x1FF"
+            "source_fragment" : "standard_metadata.egress_spec = port"
           }
         }
       ]
     },
     {
-      "name" : "MyIngress.flood",
+      "name" : "MyIngress.to_controller",
       "id" : 2,
       "runtime_data" : [],
       "primitives" : [
@@ -272,45 +277,16 @@
             },
             {
               "type" : "hexstr",
-              "value" : "0x01ff"
+              "value" : "0x00ff"
             }
           ],
           "source_info" : {
             "filename" : "p4-src/switch.p4",
-            "line" : 198,
+            "line" : 185,
             "column" : 8,
-            "source_fragment" : "standard_metadata.egress_spec = 0x1FF"
+            "source_fragment" : "standard_metadata.egress_spec = 255"
           }
-        }
-      ]
-    },
-    {
-      "name" : "MyEgress.drop",
-      "id" : 3,
-      "runtime_data" : [],
-      "primitives" : [
-        {
-          "op" : "mark_to_drop",
-          "parameters" : [
-            {
-              "type" : "header",
-              "value" : "standard_metadata"
-            }
-          ],
-          "source_info" : {
-            "filename" : "p4-src/switch.p4",
-            "line" : 274,
-            "column" : 8,
-            "source_fragment" : "mark_to_drop(standard_metadata)"
-          }
-        }
-      ]
-    },
-    {
-      "name" : "MyEgress.to_controller",
-      "id" : 4,
-      "runtime_data" : [],
-      "primitives" : [
+        },
         {
           "op" : "add_header",
           "parameters" : [
@@ -321,7 +297,7 @@
           ],
           "source_info" : {
             "filename" : "p4-src/switch.p4",
-            "line" : 278,
+            "line" : 186,
             "column" : 8,
             "source_fragment" : "hdr.packet_in.setValid()"
           }
@@ -340,7 +316,7 @@
           ],
           "source_info" : {
             "filename" : "p4-src/switch.p4",
-            "line" : 279,
+            "line" : 187,
             "column" : 8,
             "source_fragment" : "hdr.packet_in.ingress_port = standard_metadata.ingress_port"
           }
@@ -348,8 +324,82 @@
       ]
     },
     {
-      "name" : "act",
+      "name" : "MyIngress.forward_to_default_cdn",
+      "id" : 3,
+      "runtime_data" : [],
+      "primitives" : [
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["standard_metadata", "egress_spec"]
+            },
+            {
+              "type" : "hexstr",
+              "value" : "0x0002"
+            }
+          ],
+          "source_info" : {
+            "filename" : "p4-src/switch.p4",
+            "line" : 193,
+            "column" : 8,
+            "source_fragment" : "standard_metadata.egress_spec = 2"
+          }
+        }
+      ]
+    },
+    {
+      "name" : "MyIngress.drop",
+      "id" : 4,
+      "runtime_data" : [],
+      "primitives" : [
+        {
+          "op" : "mark_to_drop",
+          "parameters" : [
+            {
+              "type" : "header",
+              "value" : "standard_metadata"
+            }
+          ],
+          "source_info" : {
+            "filename" : "p4-src/switch.p4",
+            "line" : 197,
+            "column" : 8,
+            "source_fragment" : "mark_to_drop(standard_metadata)"
+          }
+        }
+      ]
+    },
+    {
+      "name" : "MyIngress.flood",
       "id" : 5,
+      "runtime_data" : [],
+      "primitives" : [
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["standard_metadata", "egress_spec"]
+            },
+            {
+              "type" : "hexstr",
+              "value" : "0x01ff"
+            }
+          ],
+          "source_info" : {
+            "filename" : "p4-src/switch.p4",
+            "line" : 201,
+            "column" : 8,
+            "source_fragment" : "standard_metadata.egress_spec = 0x1FF"
+          }
+        }
+      ]
+    },
+    {
+      "name" : "act",
+      "id" : 6,
       "runtime_data" : [],
       "primitives" : [
         {
@@ -376,7 +426,7 @@
           ],
           "source_info" : {
             "filename" : "p4-src/switch.p4",
-            "line" : 286,
+            "line" : 243,
             "column" : 12,
             "source_fragment" : "return"
           }
@@ -385,7 +435,7 @@
     },
     {
       "name" : "act_0",
-      "id" : 6,
+      "id" : 7,
       "runtime_data" : [],
       "primitives" : [
         {
@@ -415,7 +465,7 @@
     },
     {
       "name" : "act_1",
-      "id" : 7,
+      "id" : 8,
       "runtime_data" : [],
       "primitives" : [
         {
@@ -442,9 +492,67 @@
           ],
           "source_info" : {
             "filename" : "p4-src/switch.p4",
-            "line" : 291,
+            "line" : 248,
             "column" : 12,
             "source_fragment" : "return"
+          }
+        }
+      ]
+    },
+    {
+      "name" : "act_2",
+      "id" : 9,
+      "runtime_data" : [],
+      "primitives" : [
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "hasReturned"]
+            },
+            {
+              "type" : "expression",
+              "value" : {
+                "type" : "expression",
+                "value" : {
+                  "op" : "b2d",
+                  "left" : null,
+                  "right" : {
+                    "type" : "bool",
+                    "value" : true
+                  }
+                }
+              }
+            }
+          ],
+          "source_info" : {
+            "filename" : "p4-src/switch.p4",
+            "line" : 255,
+            "column" : 12,
+            "source_fragment" : "return"
+          }
+        }
+      ]
+    },
+    {
+      "name" : "MyEgress.drop",
+      "id" : 10,
+      "runtime_data" : [],
+      "primitives" : [
+        {
+          "op" : "mark_to_drop",
+          "parameters" : [
+            {
+              "type" : "header",
+              "value" : "standard_metadata"
+            }
+          ],
+          "source_info" : {
+            "filename" : "p4-src/switch.p4",
+            "line" : 276,
+            "column" : 8,
+            "source_fragment" : "mark_to_drop(standard_metadata)"
           }
         }
       ]
@@ -460,16 +568,39 @@
         "column" : 8,
         "source_fragment" : "MyIngress"
       },
-      "init_table" : "node_2",
+      "init_table" : "tbl_act",
       "tables" : [
         {
-          "name" : "tbl_flood",
+          "name" : "tbl_act",
           "id" : 0,
+          "key" : [],
+          "match_type" : "exact",
+          "type" : "simple",
+          "max_size" : 1024,
+          "with_counters" : false,
+          "support_timeout" : false,
+          "direct_meters" : null,
+          "action_ids" : [7],
+          "actions" : ["act_0"],
+          "base_default_next" : "node_3",
+          "next_tables" : {
+            "act_0" : "node_3"
+          },
+          "default_entry" : {
+            "action_id" : 7,
+            "action_const" : true,
+            "action_data" : [],
+            "action_entry_const" : true
+          }
+        },
+        {
+          "name" : "tbl_to_controller",
+          "id" : 1,
           "source_info" : {
             "filename" : "p4-src/switch.p4",
-            "line" : 251,
+            "line" : 242,
             "column" : 12,
-            "source_fragment" : "flood()"
+            "source_fragment" : "to_controller()"
           },
           "key" : [],
           "match_type" : "exact",
@@ -479,10 +610,10 @@
           "support_timeout" : false,
           "direct_meters" : null,
           "action_ids" : [2],
-          "actions" : ["MyIngress.flood"],
-          "base_default_next" : null,
+          "actions" : ["MyIngress.to_controller"],
+          "base_default_next" : "tbl_act_0",
           "next_tables" : {
-            "MyIngress.flood" : null
+            "MyIngress.to_controller" : "tbl_act_0"
           },
           "default_entry" : {
             "action_id" : 2,
@@ -492,11 +623,112 @@
           }
         },
         {
-          "name" : "MyIngress.mac_forward",
-          "id" : 1,
+          "name" : "tbl_act_0",
+          "id" : 2,
           "source_info" : {
             "filename" : "p4-src/switch.p4",
-            "line" : 206,
+            "line" : 243,
+            "column" : 12,
+            "source_fragment" : "return"
+          },
+          "key" : [],
+          "match_type" : "exact",
+          "type" : "simple",
+          "max_size" : 1024,
+          "with_counters" : false,
+          "support_timeout" : false,
+          "direct_meters" : null,
+          "action_ids" : [6],
+          "actions" : ["act"],
+          "base_default_next" : "node_6",
+          "next_tables" : {
+            "act" : "node_6"
+          },
+          "default_entry" : {
+            "action_id" : 6,
+            "action_const" : true,
+            "action_data" : [],
+            "action_entry_const" : true
+          }
+        },
+        {
+          "name" : "MyIngress.cdn_table",
+          "id" : 3,
+          "source_info" : {
+            "filename" : "p4-src/switch.p4",
+            "line" : 223,
+            "column" : 10,
+            "source_fragment" : "cdn_table"
+          },
+          "key" : [
+            {
+              "match_type" : "exact",
+              "name" : "hdr.cdn_req.videoID",
+              "target" : ["cdn_req", "videoID"],
+              "mask" : null
+            },
+            {
+              "match_type" : "exact",
+              "name" : "hdr.cdn_req.chunkID",
+              "target" : ["cdn_req", "chunkID"],
+              "mask" : null
+            }
+          ],
+          "match_type" : "exact",
+          "type" : "simple",
+          "max_size" : 1024,
+          "with_counters" : false,
+          "support_timeout" : false,
+          "direct_meters" : null,
+          "action_ids" : [1, 3],
+          "actions" : ["MyIngress.forward", "MyIngress.forward_to_default_cdn"],
+          "base_default_next" : "tbl_act_1",
+          "next_tables" : {
+            "MyIngress.forward" : "tbl_act_1",
+            "MyIngress.forward_to_default_cdn" : "tbl_act_1"
+          },
+          "default_entry" : {
+            "action_id" : 3,
+            "action_const" : false,
+            "action_data" : [],
+            "action_entry_const" : false
+          }
+        },
+        {
+          "name" : "tbl_act_1",
+          "id" : 4,
+          "source_info" : {
+            "filename" : "p4-src/switch.p4",
+            "line" : 248,
+            "column" : 12,
+            "source_fragment" : "return"
+          },
+          "key" : [],
+          "match_type" : "exact",
+          "type" : "simple",
+          "max_size" : 1024,
+          "with_counters" : false,
+          "support_timeout" : false,
+          "direct_meters" : null,
+          "action_ids" : [8],
+          "actions" : ["act_1"],
+          "base_default_next" : "node_10",
+          "next_tables" : {
+            "act_1" : "node_10"
+          },
+          "default_entry" : {
+            "action_id" : 8,
+            "action_const" : true,
+            "action_data" : [],
+            "action_entry_const" : true
+          }
+        },
+        {
+          "name" : "MyIngress.mac_forward",
+          "id" : 5,
+          "source_info" : {
+            "filename" : "p4-src/switch.p4",
+            "line" : 209,
             "column" : 10,
             "source_fragment" : "mac_forward"
           },
@@ -514,31 +746,89 @@
           "with_counters" : false,
           "support_timeout" : false,
           "direct_meters" : null,
-          "action_ids" : [0, 1],
+          "action_ids" : [0, 5],
           "actions" : ["MyIngress.forward", "MyIngress.flood"],
-          "base_default_next" : null,
+          "base_default_next" : "tbl_act_2",
           "next_tables" : {
-            "MyIngress.forward" : null,
-            "MyIngress.flood" : null
+            "MyIngress.forward" : "tbl_act_2",
+            "MyIngress.flood" : "tbl_act_2"
           },
           "default_entry" : {
-            "action_id" : 1,
+            "action_id" : 5,
             "action_const" : false,
             "action_data" : [],
             "action_entry_const" : false
+          }
+        },
+        {
+          "name" : "tbl_act_2",
+          "id" : 6,
+          "source_info" : {
+            "filename" : "p4-src/switch.p4",
+            "line" : 255,
+            "column" : 12,
+            "source_fragment" : "return"
+          },
+          "key" : [],
+          "match_type" : "exact",
+          "type" : "simple",
+          "max_size" : 1024,
+          "with_counters" : false,
+          "support_timeout" : false,
+          "direct_meters" : null,
+          "action_ids" : [9],
+          "actions" : ["act_2"],
+          "base_default_next" : "node_14",
+          "next_tables" : {
+            "act_2" : "node_14"
+          },
+          "default_entry" : {
+            "action_id" : 9,
+            "action_const" : true,
+            "action_data" : [],
+            "action_entry_const" : true
+          }
+        },
+        {
+          "name" : "tbl_drop",
+          "id" : 7,
+          "source_info" : {
+            "filename" : "p4-src/switch.p4",
+            "line" : 258,
+            "column" : 8,
+            "source_fragment" : "drop()"
+          },
+          "key" : [],
+          "match_type" : "exact",
+          "type" : "simple",
+          "max_size" : 1024,
+          "with_counters" : false,
+          "support_timeout" : false,
+          "direct_meters" : null,
+          "action_ids" : [4],
+          "actions" : ["MyIngress.drop"],
+          "base_default_next" : null,
+          "next_tables" : {
+            "MyIngress.drop" : null
+          },
+          "default_entry" : {
+            "action_id" : 4,
+            "action_const" : true,
+            "action_data" : [],
+            "action_entry_const" : true
           }
         }
       ],
       "action_profiles" : [],
       "conditionals" : [
         {
-          "name" : "node_2",
+          "name" : "node_3",
           "id" : 0,
           "source_info" : {
             "filename" : "p4-src/switch.p4",
-            "line" : 250,
+            "line" : 241,
             "column" : 11,
-            "source_fragment" : "hdr.ethernet.etherType == 0x0806"
+            "source_fragment" : "hdr.ethernet.etherType == 0x88B5"
           },
           "expression" : {
             "type" : "expression",
@@ -550,176 +840,45 @@
               },
               "right" : {
                 "type" : "hexstr",
-                "value" : "0x0806"
+                "value" : "0x88b5"
               }
             }
           },
-          "true_next" : "tbl_flood",
-          "false_next" : "MyIngress.mac_forward"
-        }
-      ]
-    },
-    {
-      "name" : "egress",
-      "id" : 1,
-      "source_info" : {
-        "filename" : "p4-src/switch.p4",
-        "line" : 266,
-        "column" : 8,
-        "source_fragment" : "MyEgress"
-      },
-      "init_table" : "tbl_act",
-      "tables" : [
-        {
-          "name" : "tbl_act",
-          "id" : 2,
-          "key" : [],
-          "match_type" : "exact",
-          "type" : "simple",
-          "max_size" : 1024,
-          "with_counters" : false,
-          "support_timeout" : false,
-          "direct_meters" : null,
-          "action_ids" : [6],
-          "actions" : ["act_0"],
-          "base_default_next" : "node_8",
-          "next_tables" : {
-            "act_0" : "node_8"
-          },
-          "default_entry" : {
-            "action_id" : 6,
-            "action_const" : true,
-            "action_data" : [],
-            "action_entry_const" : true
-          }
+          "true_next" : "tbl_to_controller",
+          "false_next" : "node_6"
         },
         {
-          "name" : "tbl_drop",
-          "id" : 3,
-          "source_info" : {
-            "filename" : "p4-src/switch.p4",
-            "line" : 285,
-            "column" : 12,
-            "source_fragment" : "drop()"
-          },
-          "key" : [],
-          "match_type" : "exact",
-          "type" : "simple",
-          "max_size" : 1024,
-          "with_counters" : false,
-          "support_timeout" : false,
-          "direct_meters" : null,
-          "action_ids" : [3],
-          "actions" : ["MyEgress.drop"],
-          "base_default_next" : "tbl_act_0",
-          "next_tables" : {
-            "MyEgress.drop" : "tbl_act_0"
-          },
-          "default_entry" : {
-            "action_id" : 3,
-            "action_const" : true,
-            "action_data" : [],
-            "action_entry_const" : true
-          }
-        },
-        {
-          "name" : "tbl_act_0",
-          "id" : 4,
-          "source_info" : {
-            "filename" : "p4-src/switch.p4",
-            "line" : 286,
-            "column" : 12,
-            "source_fragment" : "return"
-          },
-          "key" : [],
-          "match_type" : "exact",
-          "type" : "simple",
-          "max_size" : 1024,
-          "with_counters" : false,
-          "support_timeout" : false,
-          "direct_meters" : null,
-          "action_ids" : [5],
-          "actions" : ["act"],
-          "base_default_next" : "node_11",
-          "next_tables" : {
-            "act" : "node_11"
-          },
-          "default_entry" : {
-            "action_id" : 5,
-            "action_const" : true,
-            "action_data" : [],
-            "action_entry_const" : true
-          }
-        },
-        {
-          "name" : "tbl_to_controller",
-          "id" : 5,
-          "source_info" : {
-            "filename" : "p4-src/switch.p4",
-            "line" : 290,
-            "column" : 12,
-            "source_fragment" : "to_controller()"
-          },
-          "key" : [],
-          "match_type" : "exact",
-          "type" : "simple",
-          "max_size" : 1024,
-          "with_counters" : false,
-          "support_timeout" : false,
-          "direct_meters" : null,
-          "action_ids" : [4],
-          "actions" : ["MyEgress.to_controller"],
-          "base_default_next" : "tbl_act_1",
-          "next_tables" : {
-            "MyEgress.to_controller" : "tbl_act_1"
-          },
-          "default_entry" : {
-            "action_id" : 4,
-            "action_const" : true,
-            "action_data" : [],
-            "action_entry_const" : true
-          }
-        },
-        {
-          "name" : "tbl_act_1",
-          "id" : 6,
-          "source_info" : {
-            "filename" : "p4-src/switch.p4",
-            "line" : 291,
-            "column" : 12,
-            "source_fragment" : "return"
-          },
-          "key" : [],
-          "match_type" : "exact",
-          "type" : "simple",
-          "max_size" : 1024,
-          "with_counters" : false,
-          "support_timeout" : false,
-          "direct_meters" : null,
-          "action_ids" : [7],
-          "actions" : ["act_1"],
-          "base_default_next" : null,
-          "next_tables" : {
-            "act_1" : null
-          },
-          "default_entry" : {
-            "action_id" : 7,
-            "action_const" : true,
-            "action_data" : [],
-            "action_entry_const" : true
-          }
-        }
-      ],
-      "action_profiles" : [],
-      "conditionals" : [
-        {
-          "name" : "node_8",
+          "name" : "node_6",
           "id" : 1,
+          "expression" : {
+            "type" : "expression",
+            "value" : {
+              "op" : "not",
+              "left" : null,
+              "right" : {
+                "type" : "expression",
+                "value" : {
+                  "op" : "d2b",
+                  "left" : null,
+                  "right" : {
+                    "type" : "field",
+                    "value" : ["scalars", "hasReturned"]
+                  }
+                }
+              }
+            }
+          },
+          "true_next" : "node_7",
+          "false_next" : "node_10"
+        },
+        {
+          "name" : "node_7",
+          "id" : 2,
           "source_info" : {
             "filename" : "p4-src/switch.p4",
-            "line" : 284,
+            "line" : 246,
             "column" : 12,
-            "source_fragment" : "standard_metadata.egress_port == standard_metadata.ingress_port"
+            "source_fragment" : "hdr.ethernet.etherType == 0x88B9"
           },
           "expression" : {
             "type" : "expression",
@@ -727,20 +886,110 @@
               "op" : "==",
               "left" : {
                 "type" : "field",
-                "value" : ["standard_metadata", "egress_port"]
+                "value" : ["ethernet", "etherType"]
               },
               "right" : {
-                "type" : "field",
-                "value" : ["standard_metadata", "ingress_port"]
+                "type" : "hexstr",
+                "value" : "0x88b9"
               }
             }
           },
-          "true_next" : "tbl_drop",
-          "false_next" : "node_11"
+          "true_next" : "MyIngress.cdn_table",
+          "false_next" : "node_10"
+        },
+        {
+          "name" : "node_10",
+          "id" : 3,
+          "expression" : {
+            "type" : "expression",
+            "value" : {
+              "op" : "not",
+              "left" : null,
+              "right" : {
+                "type" : "expression",
+                "value" : {
+                  "op" : "d2b",
+                  "left" : null,
+                  "right" : {
+                    "type" : "field",
+                    "value" : ["scalars", "hasReturned"]
+                  }
+                }
+              }
+            }
+          },
+          "true_next" : "node_11",
+          "false_next" : "node_14"
         },
         {
           "name" : "node_11",
-          "id" : 2,
+          "id" : 4,
+          "source_info" : {
+            "filename" : "p4-src/switch.p4",
+            "line" : 251,
+            "column" : 11,
+            "source_fragment" : "hdr.ethernet.etherType == 0x88B6 ..."
+          },
+          "expression" : {
+            "type" : "expression",
+            "value" : {
+              "op" : "or",
+              "left" : {
+                "type" : "expression",
+                "value" : {
+                  "op" : "or",
+                  "left" : {
+                    "type" : "expression",
+                    "value" : {
+                      "op" : "==",
+                      "left" : {
+                        "type" : "field",
+                        "value" : ["ethernet", "etherType"]
+                      },
+                      "right" : {
+                        "type" : "hexstr",
+                        "value" : "0x88b6"
+                      }
+                    }
+                  },
+                  "right" : {
+                    "type" : "expression",
+                    "value" : {
+                      "op" : "==",
+                      "left" : {
+                        "type" : "field",
+                        "value" : ["ethernet", "etherType"]
+                      },
+                      "right" : {
+                        "type" : "hexstr",
+                        "value" : "0x88b8"
+                      }
+                    }
+                  }
+                }
+              },
+              "right" : {
+                "type" : "expression",
+                "value" : {
+                  "op" : "==",
+                  "left" : {
+                    "type" : "field",
+                    "value" : ["ethernet", "etherType"]
+                  },
+                  "right" : {
+                    "type" : "hexstr",
+                    "value" : "0x88b7"
+                  }
+                }
+              }
+            }
+          },
+          "true_next" : "MyIngress.mac_forward",
+          "false_next" : "node_14"
+        },
+        {
+          "name" : "node_14",
+          "id" : 5,
           "expression" : {
             "type" : "expression",
             "value" : {
@@ -760,53 +1009,78 @@
             }
           },
           "false_next" : null,
-          "true_next" : "node_12"
-        },
+          "true_next" : "tbl_drop"
+        }
+      ]
+    },
+    {
+      "name" : "egress",
+      "id" : 1,
+      "source_info" : {
+        "filename" : "p4-src/switch.p4",
+        "line" : 268,
+        "column" : 8,
+        "source_fragment" : "MyEgress"
+      },
+      "init_table" : "node_18",
+      "tables" : [
         {
-          "name" : "node_12",
-          "id" : 3,
+          "name" : "tbl_drop_0",
+          "id" : 8,
           "source_info" : {
             "filename" : "p4-src/switch.p4",
-            "line" : 289,
+            "line" : 282,
             "column" : 12,
-            "source_fragment" : "standard_metadata.egress_port == 255 && hdr.ethernet.etherType == 0x0806"
+            "source_fragment" : "drop()"
+          },
+          "key" : [],
+          "match_type" : "exact",
+          "type" : "simple",
+          "max_size" : 1024,
+          "with_counters" : false,
+          "support_timeout" : false,
+          "direct_meters" : null,
+          "action_ids" : [10],
+          "actions" : ["MyEgress.drop"],
+          "base_default_next" : null,
+          "next_tables" : {
+            "MyEgress.drop" : null
+          },
+          "default_entry" : {
+            "action_id" : 10,
+            "action_const" : true,
+            "action_data" : [],
+            "action_entry_const" : true
+          }
+        }
+      ],
+      "action_profiles" : [],
+      "conditionals" : [
+        {
+          "name" : "node_18",
+          "id" : 6,
+          "source_info" : {
+            "filename" : "p4-src/switch.p4",
+            "line" : 281,
+            "column" : 12,
+            "source_fragment" : "standard_metadata.egress_port == standard_metadata.ingress_port"
           },
           "expression" : {
             "type" : "expression",
             "value" : {
-              "op" : "and",
+              "op" : "==",
               "left" : {
-                "type" : "expression",
-                "value" : {
-                  "op" : "==",
-                  "left" : {
-                    "type" : "field",
-                    "value" : ["standard_metadata", "egress_port"]
-                  },
-                  "right" : {
-                    "type" : "hexstr",
-                    "value" : "0x00ff"
-                  }
-                }
+                "type" : "field",
+                "value" : ["standard_metadata", "egress_port"]
               },
               "right" : {
-                "type" : "expression",
-                "value" : {
-                  "op" : "==",
-                  "left" : {
-                    "type" : "field",
-                    "value" : ["ethernet", "etherType"]
-                  },
-                  "right" : {
-                    "type" : "hexstr",
-                    "value" : "0x0806"
-                  }
-                }
+                "type" : "field",
+                "value" : ["standard_metadata", "ingress_port"]
               }
             }
           },
           "false_next" : null,
-          "true_next" : "tbl_to_controller"
+          "true_next" : "tbl_drop_0"
         }
       ]
     }

@@ -21,6 +21,32 @@ tables {
   }
   size: 1024
 }
+tables {
+  preamble {
+    id: 33600775
+    name: "MyIngress.cdn_table"
+    alias: "cdn_table"
+  }
+  match_fields {
+    id: 1
+    name: "hdr.cdn_req.videoID"
+    bitwidth: 32
+    match_type: EXACT
+  }
+  match_fields {
+    id: 2
+    name: "hdr.cdn_req.chunkID"
+    bitwidth: 32
+    match_type: EXACT
+  }
+  action_refs {
+    id: 16838673
+  }
+  action_refs {
+    id: 16817022
+  }
+  size: 1024
+}
 actions {
   preamble {
     id: 16838673
@@ -35,6 +61,27 @@ actions {
 }
 actions {
   preamble {
+    id: 16803363
+    name: "MyIngress.to_controller"
+    alias: "to_controller"
+  }
+}
+actions {
+  preamble {
+    id: 16817022
+    name: "MyIngress.forward_to_default_cdn"
+    alias: "forward_to_default_cdn"
+  }
+}
+actions {
+  preamble {
+    id: 16805608
+    name: "MyIngress.drop"
+    alias: "MyIngress.drop"
+  }
+}
+actions {
+  preamble {
     id: 16820798
     name: "MyIngress.flood"
     alias: "flood"
@@ -44,14 +91,7 @@ actions {
   preamble {
     id: 16816924
     name: "MyEgress.drop"
-    alias: "drop"
-  }
-}
-actions {
-  preamble {
-    id: 16821424
-    name: "MyEgress.to_controller"
-    alias: "to_controller"
+    alias: "MyEgress.drop"
   }
 }
 controller_packet_metadata {

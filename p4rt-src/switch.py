@@ -1,6 +1,7 @@
 import argparse
 from collections import deque
 import contextlib
+from enum import Enum
 import json
 
 import p4runtime_sh.shell as p4sh
@@ -21,8 +22,26 @@ BRIDGE_CPU_PORT = 255
 # Logs threshold
 NUM_LOGS_THRESHOLD = 10
 
-ETH_TYPE_CDN = 0x88B5  # Custom Ethertype for CDN traffic
-ETH_TYPE_ARP = 0x0806  # Ethertype for ARP traffic
+# ETH_TYPE_CDN = 0x88B5  # Custom Ethertype for CDN traffic
+# ETH_TYPE_ARP = 0x0806  # Ethertype for ARP traffic
+
+
+# enum of ethernet types
+class EthType(Enum):
+     REQ_TO_ORGN = 0x88B6
+     MSG_TO_CONTROLLER = 0x88B5
+     RESP_FROM_ORGN = 0x88B7
+     RESP_FROM_CDN = 0x88B8
+     REQ_TO_CDN = 0x88B9
+     ARP = 0x0806
+     
+     
+# ETH_TYPE_REQ_TO_ORGN = 0x88B6
+# ETH_TYPE_MSG_TO_CONTROLLER = 0x88B5
+# ETH_TYPE_RESP_FROM_ORGN = 0x88B7
+# ETH_TYPE_RESP_FROM_CDN = 0x88B8
+# ETH_TYPE_REQ_TO_CDN = 0x88B9
+
 
 def install_ipv4_route(dst_ip, dst_mac, src_mac, port):
     print("bruh")
@@ -117,7 +136,7 @@ def install_mac_forward(mac, out_port):
     entry.match['hdr.ethernet.dstAddr'] = mac
     entry.action['port'] = str(out_port)
 
-    print("Adding MAC forward entry:", mac, "->", out_port)
+    print("Adding MAC forward entry:",  mac, "->", out_port)
 
     entry.insert()
 
@@ -222,7 +241,7 @@ def ProcPacketIn(switch_name, logs_dir, num_logs_threshold):
 
 
                 # rest of bytes should be raw data
-                if eth_type == ETH_TYPE_CDN:
+                if eth_type == EthType.MSG_TO_CONTROLLER:
                     chunk_data = payload[17:]
                     action = payload[14:17].decode()
                     
@@ -252,15 +271,21 @@ def ProcPacketIn(switch_name, logs_dir, num_logs_threshold):
                         print("PacketIn CDN: video_id={0} chunk_id={1} cdn_port={2}".format(
                             video_id, chunk_id, cdn_port))
                     
-                elif eth_type == ETH_TYPE_ARP:
-                    table_entry = p4sh.TableEntry('MyIngress.switch_table')(action='MyIngress.forward')
-                    table_entry.match['hdr.ethernet.dstAddr'] = src_mac
-                    table_entry.action['port'] =  str(ingress_port)
-                    table_entry.insert()
+                elif eth_type == EthType.ARP:
+                    
+                    print("PacketIn ARP?: dst={0} src={1} port={2}".format(
+                        dst_mac, src_mac, ingress_port))
+                    
+                    
+                    # table_entry = p4sh.TableEntry('MyIngress.mac_forward')(action='MyIngress.forward')
+                    # table_entry.match['hdr.ethernet.dstAddr'] = src_mac
+                    # table_entry.action['port'] =  str(ingress_port)
+                    # table_entry.insert()
                 
                 else:
-                    print("PacketIn ether?: dst={0} src={1} port={2}".format(
-                        dst_mac, src_mac, ingress_port))
+                    eth_type_name = EthType(eth_type).name
+                    
+                    print(f"PacketIn ether{eth_type_name}: dst={dst_mac} src={src_mac} port={ingress_port}")
 
             # Log the Ethernet address to port mapping
             num_logs += 1
@@ -269,6 +294,7 @@ def ProcPacketIn(switch_name, logs_dir, num_logs_threshold):
                 with open('{0}/{1}-table.json'.format(logs_dir, switch_name), 'w') as outfile:
                     with contextlib.redirect_stdout(outfile):
                         p4sh.TableEntry('MyIngress.mac_forward').read(lambda te: print(te))
+                        p4sh.TableEntry('MyIngress.cdn_table').read(lambda te: print(te))
                 print(
                     "INFO: Log committed to {0}/{1}-table.json".format(logs_dir, switch_name))
     except KeyboardInterrupt:

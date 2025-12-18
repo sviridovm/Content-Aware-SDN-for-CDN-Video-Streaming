@@ -2,7 +2,7 @@ table_id: 33604107 ("MyIngress.mac_forward")
 match {
   field_id: 1 ("hdr.ethernet.dstAddr")
   exact {
-    value: "\\xae\\x12\\x59\\xf8\\xcf\\x9c"
+    value: "\\x62\\x24\\x5e\\xef\\x8a\\x9c"
   }
 }
 action {
@@ -19,7 +19,7 @@ table_id: 33604107 ("MyIngress.mac_forward")
 match {
   field_id: 1 ("hdr.ethernet.dstAddr")
   exact {
-    value: "\\x86\\x11\\x28\\x7e\\x9e\\x1b"
+    value: "\\xe6\\x56\\xcb\\x3b\\x8d\\x92"
   }
 }
 action {
@@ -36,7 +36,7 @@ table_id: 33604107 ("MyIngress.mac_forward")
 match {
   field_id: 1 ("hdr.ethernet.dstAddr")
   exact {
-    value: "\\x42\\x88\\x90\\xf6\\x72\\x11"
+    value: "\\x92\\xd3\\x5b\\x9d\\xc2\\x9a"
   }
 }
 action {
@@ -53,7 +53,7 @@ table_id: 33604107 ("MyIngress.mac_forward")
 match {
   field_id: 1 ("hdr.ethernet.dstAddr")
   exact {
-    value: "\\xa6\\x26\\x0b\\x83\\xf9\\xf7"
+    value: "\\x72\\xd8\\x12\\x0a\\xea\\xa8"
   }
 }
 action {
@@ -70,7 +70,7 @@ table_id: 33604107 ("MyIngress.mac_forward")
 match {
   field_id: 1 ("hdr.ethernet.dstAddr")
   exact {
-    value: "\\xda\\x8f\\x3a\\x12\\x40\\x59"
+    value: "\\xba\\xec\\x94\\x5e\\xba\\x0b"
   }
 }
 action {
@@ -87,7 +87,7 @@ table_id: 33604107 ("MyIngress.mac_forward")
 match {
   field_id: 1 ("hdr.ethernet.dstAddr")
   exact {
-    value: "\\x62\\x7d\\x34\\x12\\xe9\\xdf"
+    value: "\\xba\\xa2\\x7b\\xae\\x15\\x32"
   }
 }
 action {
@@ -104,7 +104,7 @@ table_id: 33604107 ("MyIngress.mac_forward")
 match {
   field_id: 1 ("hdr.ethernet.dstAddr")
   exact {
-    value: "\\x46\\xc9\\x58\\x44\\xf4\\x7a"
+    value: "\\xc6\\x12\\xb5\\x79\\xf6\\xfc"
   }
 }
 action {

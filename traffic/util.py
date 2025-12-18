@@ -1,10 +1,9 @@
 import socket
-from urllib import response
-from flask import Response, abort, send_file
 import scapy
 from scapy.all import Ether, sendp, Raw, Packet, sniff
-from scapy.fields import IntField, StrLenField
+from scapy.fields import IntField, StrField
 from scapy.all import bind_layers
+from scapy.all import AsyncSniffer
 
 ETH_TYPE_REQ_TO_ORGN = 0x88B6
 ETH_TYPE_MSG_TO_CONTROLLER = 0x88B5
@@ -25,7 +24,7 @@ class VideoResponse(Packet):
     fields_desc = [
         IntField("video_id", 0),
         IntField("chunk_id", 0),
-        StrLenField("data", b"", length_from=lambda pkt: len(pkt.data)),
+        StrField("data", b""),
     ]
 
 bind_layers(Ether, VideoRequest, type=ETH_TYPE_REQ_TO_ORGN)
@@ -34,16 +33,8 @@ bind_layers(Ether, VideoResponse, type=ETH_TYPE_RESP_FROM_CDN)
 bind_layers(Ether, VideoRequest, type=ETH_TYPE_REQ_TO_CDN)
 
 
-def is_video_response(pkt):
-    return (
-        pkt.haslayer(Ether)
-        and pkt[Ether].type in {ETH_TYPE_RESP_FROM_ORGN, ETH_TYPE_RESP_FROM_CDN}
-        and pkt.haslayer(VideoResponse)
-    )
-
-
-def request_video(dst_mac_addr: str, video_id: int, chunk_id: int, from_origin: bool, host: str) -> Response:
-    eth = Ether(dst=dst_mac_addr, type=ETH_TYPE_REQ_TO_ORGN if from_origin else ETH_TYPE_REQ_TO_CDN)
+def request_video(dst_mac_addr: str, src_mac_addr: str, video_id: int, chunk_id: int, from_origin: bool, host: str) -> bytes:
+    eth = Ether(dst=dst_mac_addr, type=ETH_TYPE_REQ_TO_ORGN if from_origin else ETH_TYPE_REQ_TO_CDN, src=src_mac_addr)
     packet = eth / VideoRequest(
         video_id=video_id,
         chunk_id=chunk_id
@@ -51,40 +42,72 @@ def request_video(dst_mac_addr: str, video_id: int, chunk_id: int, from_origin: 
     
     
     iface_name = f"{host}-eth1"
+    
+    print("interface_name:", iface_name)
+    
     # Send packet and wait for response
+    sendp(packet, iface=iface_name, verbose=False)
+
+    def is_video_response(pkt):
+        return (
+            pkt.haslayer(Ether)
+            and pkt[Ether].type == (ETH_TYPE_RESP_FROM_ORGN if from_origin else ETH_TYPE_RESP_FROM_CDN)
+            and pkt.haslayer(VideoResponse)
+        )
+
+
+
+    received_response = False
+    response = bytes()
+
+
+    def handle_packet(pkt: Packet):
+        pkt.show()
+        resp = pkt[VideoResponse]
+        video_id = resp.video_id
+        chunk_id = resp.chunk_id
+        data = resp.data
+        print(f"Received video response: video_id={video_id}, chunk_id={chunk_id}, data_length={len(data)}")
+        nonlocal received_response
+        received_response = True
+        
+        nonlocal response
+        response = data
+
+
+    sniff(
+        iface=iface_name,
+        lfilter=is_video_response,
+        prn=handle_packet,
+        timeout=5,
+    )
+    
+    
+    if not received_response:
+        print("No response received for the video request.")
+        return bytes()
+    else:
+        return response
+
+def request_video_no_response(dst_mac_addr: str, src_mac_addr: str, video_id: int, chunk_id: int, from_origin: bool, host: str):
+    eth = Ether(dst=dst_mac_addr, type=ETH_TYPE_REQ_TO_ORGN if from_origin else ETH_TYPE_REQ_TO_CDN, src=src_mac_addr)
+    packet = eth / VideoRequest(
+        video_id=video_id,
+        chunk_id=chunk_id
+    )
+    
+    
+    iface_name = f"{host}-eth1"
+    
+    print("interface_name:", iface_name)
+    
+    # Send packet without waiting for response
     sendp(packet, iface=iface_name, verbose=False)
 
 
 
-    pkts = None
-    try:
-        pkts = sniff(
-        iface=iface_name,
-        lfilter=is_video_response,
-        timeout=5,
-        count=1)
-    except Exception as e:
-        print("Error while sniffing:", e)
-        return Response(status=504)
 
-
-    if not pkts:
-        # print("No response received")
-        return Response(status=504, response="No response received")
-
-    
-    resp = pkts[0][VideoResponse]
-
-    print("video_id:", resp.video_id)
-    print("chunk_id:", resp.chunk_id)
-    data = resp.data
-    chunk_data = scapy.compat.BytesIO(data)
-
-    return send_file(chunk_data)
-
-
-
-def listen_for_video_requests(is_origin: bool, handle_request_callback, host: str):
+def listen_for_video_requests(is_origin: bool, handle_request_callback, handle_response_callback, host: str):
     ETH_TYPE = ETH_TYPE_REQ_TO_ORGN if is_origin else ETH_TYPE_REQ_TO_CDN
 
     def is_video_request(pkt: Packet):
@@ -94,18 +117,52 @@ def listen_for_video_requests(is_origin: bool, handle_request_callback, host: st
             and pkt.haslayer(VideoRequest)
         )
 
+    def is_video_response(pkt: Packet):
+        return (
+            pkt.haslayer(Ether)
+            and pkt[Ether].type == (ETH_TYPE_RESP_FROM_ORGN)
+            and pkt.haslayer(VideoResponse)
+        )
+        
+        
+    def filter_packet(pkt: Packet):
+        return is_video_request(pkt) or is_video_response(pkt)
+
+
+
     def process_packet(pkt: Packet):
         if is_video_request(pkt):
-            video_req = pkt[VideoRequest]
-            video_id = video_req.video_id
-            chunk_id = video_req.chunk_id
-            print(f"Received video request: video_id={video_id}, chunk_id={chunk_id}")
-            handle_request_callback(video_id, chunk_id, pkt)
+            process_request_packet(pkt)
+        elif is_video_response(pkt) and handle_response_callback is not None:
+            process_response_packet(pkt)
 
+
+    def process_request_packet(pkt: Packet):
+        print("Processing request packet:")
+        pkt.show()
+        video_req = pkt[VideoRequest]
+        video_id = video_req.video_id
+        chunk_id = video_req.chunk_id
+        print(f"Received video request: video_id={video_id}, chunk_id={chunk_id}")
+        handle_request_callback(video_id, chunk_id, pkt)
+
+    def process_response_packet(pkt: Packet):
+        print("Processing response packet:")
+        pkt.show()
+        video_resp = pkt[VideoResponse]
+        video_id = video_resp.video_id
+        chunk_id = video_resp.chunk_id
+        data = video_resp.data
+        print(f"Received video response: video_id={video_id}, chunk_id={chunk_id}, data_length={len(data)}")
+        handle_response_callback(video_id, chunk_id, data)
+    
+
+
+        
     sniff(
         iface=f"{host}-eth1",
         prn=process_packet,
-        lfilter=is_video_request,
+        lfilter=filter_packet,
         store=0
     )
     

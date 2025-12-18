@@ -1,9 +1,3 @@
-/*****************************************************************************
- *
- *  switch
- *
- *****************************************************************************/
-
 /* -*- P4_16 -*- */
 #include <core.p4>
 #include <v1model.p4>
@@ -21,6 +15,7 @@
 #define ETH_TYPE_RESP_FROM_CDN 0x88B8
 #define ETH_TYPE_REQ_TO_ORGN 0x88B6
 #define ETH_TYPE_RESP_FROM_ORGN 0x88B7
+
 
 #define ETH_TYPE_MSG_TO_CONTROLLER 0x88B5
 
@@ -45,54 +40,16 @@ header ethernet_t {
     macAddr_t srcAddr;
     bit<16> etherType;
 }
-/**
-header ipv4_t {
-    bit<4>  version;
-    bit<4>  ihl;
-    bit<8>  diffserv;
-    bit<16> totalLen;
-    bit<16> identification;
-    bit<3>  flags;
-    bit<13> fragOffset;
-    bit<8>  ttl;
-    bit<8>  protocol;
-    bit<16> hdrChecksum;
-    bit<32> srcAddr;
-    bit<32> dstAddr;
-}
-**/
-
-
-/**
-header tcp_t {
-    bit<16> srcPort;
-    bit<16> dstPort;
-    bit<32> seqNo;
-    bit<32> ackNo;
-    bit<4>  dataOffset;
-    bit<4>  res;
-    bit<8>  flags;
-    bit<16> window;
-    bit<16> checksum;
-    bit<16> urgentPtr;
-}
-**/
-
 
 header cdn_req_t {
     bit<32> videoID;
     bit<32> chunkID;
 }
 
-struct metadata {
-
-}
-
+struct metadata {}
 
 struct headers {
     ethernet_t ethernet;
-//    ipv4_t ipv4;
-//    tcp_t tcp;
     cdn_req_t cdn_req;
     packet_in_header_t packet_in;
 }
@@ -119,45 +76,12 @@ parser MyParser(packet_in packet,
         }
     }
 
-
-    /**
-    state parse_tcp {
-        packet.extract(hdr.tcp);
-        transition select(hdr.tcp.dstPort) {
-            CDN_PORT: parse_msg_type;
-            default: accept;
-        }
-    }
-    **/
-
-    /**
-    state parse_msg_type {
-        packet.extract(hdr.msg_type);
-        transition select(hdr.msg_type.signature) {
-            REQUEST_BYTE_SIGNATURE: parse_cdn;
-            //RESPONSE_BYTE_SIGNATURE: accept;
-            //ORIGIN_BYTE_SIGNATURE: accept;
-            default: accept;
-        }
-    }
-    **/
-
     state parse_cdn {
         packet.extract(hdr.cdn_req);
         //meta.videoID = hdr.cdn_req.video_id;
         //meta.chunkID = hdr.cdn_req.chunk_id;
         transition accept;
     }
-    
-    /**
-    state parse_ipv4 {
-        packet.extract(hdr.ipv4);
-        transition select(hdr.ipv4.protocol) {
-            6: parse_tcp; // TCP protocol
-            default: accept;
-        }
-    }
-    **/
 
 }
 
@@ -177,47 +101,20 @@ control MyIngress(inout headers hdr,
                   inout metadata meta,
                   inout standard_metadata_t standard_metadata) {
 
-    action forward(egressSpec_t port) {
-        standard_metadata.egress_spec = port;
-    }
-
-    action to_controller() {
-        standard_metadata.egress_spec = CPU_PORT;
-        hdr.packet_in.setValid();
-        hdr.packet_in.ingress_port = standard_metadata.ingress_port;
-    }
-
-   
-
-    action forward_to_default_cdn() {
-        standard_metadata.egress_spec = 2; // what is the correct egress_port?
-    }
-
     action drop() {
         mark_to_drop(standard_metadata);
     }
 
     action flood() {
-        standard_metadata.egress_spec = 0x1FF; // BMv2 flood
+        standard_metadata.mcast_grp = MCAST_ID;
     }
 
-    action noop() {
-
+    action forward(egressSpec_t port) {
+        standard_metadata.egress_spec = port;
     }
 
-
-    table mac_forward {
-        key = {
-            hdr.ethernet.dstAddr: exact;
-        }
-
-        actions = {
-            forward;
-            flood;
-        }
-
-        size = 1024;
-        default_action = flood();
+    action forward_to_default_cdn() {
+        standard_metadata.egress_spec = 1; // what is the correct egress_port?
     }
 
     table cdn_table {
@@ -235,28 +132,44 @@ control MyIngress(inout headers hdr,
         default_action = forward_to_default_cdn;
     }
 
+   
 
+    action to_controller() {
+        standard_metadata.egress_spec = CPU_PORT;
+        hdr.packet_in.setValid();
+        hdr.packet_in.ingress_port = standard_metadata.ingress_port;
+    }
+
+
+    table bridge_table {
+        key = {
+            hdr.ethernet.dstAddr: exact;
+            standard_metadata.ingress_port: exact;
+        }
+        actions = {
+            drop;
+            flood;
+        }
+        size = 1024;
+        default_action = flood;
+    }
+    
     apply {
-        
+
+
         if(hdr.ethernet.etherType == ETH_TYPE_MSG_TO_CONTROLLER) {
             to_controller();
             return;
         }
 
-        if (hdr.ethernet.etherType == ETH_TYPE_REQ_TO_CDN) {
+        if(hdr.ethernet.etherType == ETH_TYPE_REQ_TO_CDN) {
             cdn_table.apply();
             return;
         }
 
-        if(hdr.ethernet.etherType == ETH_TYPE_REQ_TO_ORGN
-        || hdr.ethernet.etherType == ETH_TYPE_RESP_FROM_CDN
-        || hdr.ethernet.etherType == ETH_TYPE_RESP_FROM_ORGN) {
-            mac_forward.apply();
-            return;
-        }
-
-        drop();
-
+        if(hdr.ethernet.etherType == ETH_TYPE_ARP) {
+            bridge_table.apply();
+        } 
 
     }
 }
@@ -268,22 +181,23 @@ control MyIngress(inout headers hdr,
 control MyEgress(inout headers hdr,
                  inout metadata meta,
                  inout standard_metadata_t standard_metadata) {
-                 
-
-    action noop() { }   
-
     action drop() {
         mark_to_drop(standard_metadata);
     }
 
-    apply { 
+    action to_controller() {
+        hdr.packet_in.setValid();
+        hdr.packet_in.ingress_port = standard_metadata.ingress_port;
+    }
 
-        if (standard_metadata.egress_port == standard_metadata.ingress_port) {
+    apply {
+        // Prune multicast packets going to ingress port to prevent loops
+        if (standard_metadata.egress_port == standard_metadata.ingress_port)
             drop();
-            return;
-        } 
 
-
+        // Send a copy of the packet to the controller for learning
+        if (standard_metadata.egress_port == CPU_PORT)
+            to_controller();
     }
 }
 
@@ -303,8 +217,6 @@ control MyDeparser(packet_out packet, in headers hdr) {
     apply {
         packet.emit(hdr.packet_in);
         packet.emit(hdr.ethernet);
-        packet.emit(hdr.cdn_req);
-
 
        // packet.emit(hdr.ipv4);
 

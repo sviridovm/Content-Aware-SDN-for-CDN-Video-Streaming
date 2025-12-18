@@ -2,37 +2,37 @@
     "hosts": {
         "cdn1": {
             "ip": "10.0.0.1",
-            "mac": "ae:12:59:f8:cf:9c",
+            "mac": "62:24:5e:ef:8a:9c",
             "switch": "s2"
         },
         "cdn2": {
             "ip": "10.0.0.2",
-            "mac": "86:11:28:7e:9e:1b",
+            "mac": "e6:56:cb:3b:8d:92",
             "switch": "s2"
         },
         "cdn3": {
             "ip": "10.0.0.3",
-            "mac": "42:88:90:f6:72:11",
+            "mac": "92:d3:5b:9d:c2:9a",
             "switch": "s2"
         },
         "client1": {
             "ip": "10.0.0.4",
-            "mac": "a6:26:0b:83:f9:f7",
+            "mac": "72:d8:12:0a:ea:a8",
             "switch": "s2"
         },
         "client2": {
             "ip": "10.0.0.5",
-            "mac": "da:8f:3a:12:40:59",
+            "mac": "ba:ec:94:5e:ba:0b",
             "switch": "s2"
         },
         "client3": {
             "ip": "10.0.0.6",
-            "mac": "62:7d:34:12:e9:df",
+            "mac": "ba:a2:7b:ae:15:32",
             "switch": "s2"
         },
         "origin": {
             "ip": "10.0.0.7",
-            "mac": "46:c9:58:44:f4:7a",
+            "mac": "c6:12:b5:79:f6:fc",
             "switch": "s1"
         }
     },

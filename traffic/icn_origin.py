@@ -20,7 +20,8 @@ def serve_chunk(video_id, chunk_id, request_pkt: Packet):
     if data is None:
         print(f"Origin server: video {video_id} chunk {chunk_id} not found")
         return
-    
+    else:
+        print("Data is", data)
 
 
     dst_mac = request_pkt[Ether].src
@@ -44,6 +45,7 @@ if __name__ == "__main__":
         listen_for_video_requests(
             is_origin=True,
             handle_request_callback=serve_chunk,
+            handle_response_callback=None,
             host="origin"
         )
     except KeyboardInterrupt:
