@@ -38,9 +38,6 @@ def serve_chunk(video_id, chunk_id, request_pkt: Packet):
     )
 
 if __name__ == "__main__":
-    # config = json.loads(open("topo/topo.json").read())
-
-
     try: 
         listen_for_video_requests(
             is_origin=True,

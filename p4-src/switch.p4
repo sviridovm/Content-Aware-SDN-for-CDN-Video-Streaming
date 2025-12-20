@@ -26,6 +26,10 @@
 
 #define ETH_TYPE_ARP 0x0806
 
+register<bit<32>>(1) rr_index;
+const bit<32> NUM_PORTS = 3;
+
+
 
 typedef bit<9> egressSpec_t;
 typedef bit<48> macAddr_t;
@@ -193,6 +197,28 @@ control MyIngress(inout headers hdr,
         standard_metadata.egress_spec = 2; // what is the correct egress_port?
     }
 
+    action round_robin_select() {
+        bit<32> idx;
+        rr_index.read(idx, 0);
+
+        // Map index → egress port
+        if (idx == 0) {
+            standard_metadata.egress_spec = 2;
+        } else if (idx == 1) {
+            standard_metadata.egress_spec = 3;
+        } else {
+            standard_metadata.egress_spec = 4;
+        }
+
+        // Update index
+        bit<32> next = idx + 1;
+        if (next >= NUM_PORTS) {
+            next = 0;
+        }
+        rr_index.write(0, next);
+    }
+
+
     action drop() {
         mark_to_drop(standard_metadata);
     }
@@ -228,11 +254,13 @@ control MyIngress(inout headers hdr,
 
         actions = {
             forward;
-            forward_to_default_cdn;
+            //forward_to_default_cdn;
+            round_robin_select;
         }
 
         size = 1024;
-        default_action = forward_to_default_cdn;
+        default_action = round_robin_select;
+        //default_action = forward_to_default_cdn;
     }
 
 

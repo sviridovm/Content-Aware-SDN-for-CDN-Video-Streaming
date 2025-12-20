@@ -43,7 +43,7 @@ tables {
     id: 16838673
   }
   action_refs {
-    id: 16817022
+    id: 16794685
   }
   size: 1024
 }
@@ -68,9 +68,9 @@ actions {
 }
 actions {
   preamble {
-    id: 16817022
-    name: "MyIngress.forward_to_default_cdn"
-    alias: "forward_to_default_cdn"
+    id: 16794685
+    name: "MyIngress.round_robin_select"
+    alias: "round_robin_select"
   }
 }
 actions {
@@ -111,6 +111,21 @@ controller_packet_metadata {
     name: "_pad"
     bitwidth: 7
   }
+}
+registers {
+  preamble {
+    id: 369157559
+    name: "rr_index"
+    alias: "rr_index"
+  }
+  type_spec {
+    bitstring {
+      bit {
+        bitwidth: 32
+      }
+    }
+  }
+  size: 1
 }
 type_info {
 }
